@@ -147,7 +147,7 @@ export default function Home() {
             </svg>
           </div>
           <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text-primary)", letterSpacing: "-0.01em" }}>
-            IT Procurement Intelligence
+            Infra IT
           </span>
         </div>
         <span
@@ -187,9 +187,9 @@ export default function Home() {
               letterSpacing: "-0.02em",
             }}
           >
-            IT Procurement &amp;
+            Infra
             <br />
-            <span style={{ color: "var(--accent-cyan)" }}>Inventory Intelligence</span>
+            <span style={{ color: "var(--accent-cyan)" }}>IT</span>
           </h1>
           <p style={{ color: "var(--text-muted)", fontSize: "1rem", maxWidth: 520, margin: "0 auto" }}>
             Upload your inventory data, predict shortfalls, evaluate hardware candidates, and

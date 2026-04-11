@@ -8,14 +8,14 @@ load_dotenv()
 from routers import upload, inventory, forecast, purchase_orders, hardware_eval
 
 app = FastAPI(
-    title="IT Procurement Intelligence API",
+    title="Infra IT API",
     description="AI-powered IT procurement and inventory management",
     version="1.0.0",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -30,4 +30,4 @@ app.include_router(hardware_eval.router, tags=["Hardware Evaluation"])
 
 @app.get("/", tags=["Health"])
 def health_check():
-    return {"status": "ok", "service": "IT Procurement Intelligence API"}
+    return {"status": "ok", "service": "Infra IT API"}

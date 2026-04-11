@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "IT Procurement Intelligence",
+  title: "Infra IT",
   description: "AI-powered IT procurement and inventory management platform",
 };
 

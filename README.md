@@ -1,4 +1,4 @@
-# IT Procurement Intelligence
+# Infra IT
 
 An AI-powered IT procurement and inventory management prototype built with **Next.js** and **Python FastAPI**.
 
