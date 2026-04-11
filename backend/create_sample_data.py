@@ -39,7 +39,7 @@ def create_sample_xlsx():
         pd.DataFrame(HARDWARE_REQUESTS).to_excel(writer, sheet_name="hardware_requests", index=False)
         pd.DataFrame(CURRENT_INVENTORY).to_excel(writer, sheet_name="current_inventory", index=False)
         pd.DataFrame(CANDIDATE_PRODUCTS).to_excel(writer, sheet_name="candidate_products", index=False)
-    print(f"✅ Sample data written to {output_path}")
+    print(f"[OK] Sample data written to {output_path}")
 
 
 if __name__ == "__main__":

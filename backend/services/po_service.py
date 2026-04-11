@@ -4,22 +4,29 @@ import pandas as pd
 from datetime import datetime, timezone
 
 
-def _get_anthropic_client():
+def _get_gemini_model():
+    """Initialise and return a Gemini GenerativeModel, or None if unconfigured."""
     try:
-        import anthropic
-        api_key = os.getenv("ANTHROPIC_API_KEY")
+        import google.generativeai as genai
+
+        api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             return None
-        return anthropic.Anthropic(api_key=api_key)
+
+        genai.configure(api_key=api_key)
+        return genai.GenerativeModel("gemini-2.0-flash")
     except ImportError:
         return None
 
 
-def _ai_justification(client, po: dict) -> str:
-    """Call Claude to generate a one-paragraph PO justification narrative."""
-    if client is None:
+def _ai_justification(model, po: dict) -> str:
+    """
+    Call Gemini to generate a one-paragraph PO justification narrative
+    suitable for a finance committee.
+    """
+    if model is None:
         return (
-            "AI justification unavailable — ANTHROPIC_API_KEY not configured. "
+            "AI justification unavailable — GEMINI_API_KEY not configured. "
             "Please set the environment variable and restart the server."
         )
 
@@ -33,15 +40,12 @@ Unit Cost: ${po['unit_cost']}
 Total Cost: ${po['total_cost']}
 Trigger Reason: {po['trigger_reason']}
 
-Write in a professional, concise tone suitable for approval by a finance committee. Include business impact of not procuring, cost justification, and urgency."""
+Write in a professional, concise tone suitable for approval by a finance committee. \
+Include the business impact of not procuring, cost justification, and urgency."""
 
     try:
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=400,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return message.content[0].text.strip()
+        response = model.generate_content(prompt)
+        return response.text.strip()
     except Exception as e:
         return f"AI justification error: {str(e)}"
 
@@ -50,13 +54,13 @@ def generate_draft_po(inventory_status: list[dict], candidate_df: pd.DataFrame) 
     """
     Generates draft purchase orders for CRITICAL and LOW inventory items.
     Matches each flagged model to a candidate product; falls back to the first candidate.
-    Calls Claude for a justification narrative per PO.
+    Calls Gemini for a justification narrative per PO.
     """
-    client = _get_anthropic_client()
+    gemini = _get_gemini_model()
 
     flagged = [item for item in inventory_status if item["status"] in ("CRITICAL", "LOW")]
 
-    # Build candidate lookup by model name (lower-case for fuzzy match)
+    # Build candidate lookup keyed by lower-case model name
     candidate_lookup: dict[str, dict] = {}
     if not candidate_df.empty:
         for _, row in candidate_df.iterrows():
@@ -67,17 +71,21 @@ def generate_draft_po(inventory_status: list[dict], candidate_df: pd.DataFrame) 
 
     draft_pos = []
     for idx, item in enumerate(flagged, start=1):
-        model = item["model"]
+        model_name = item["model"]
 
-        # Try to match candidate by model name fragments
+        # Fuzzy-match candidate by model name word fragments
         matched_candidate = first_candidate
         for key, candidate in candidate_lookup.items():
-            if any(word.lower() in key for word in model.lower().split()):
+            if any(word.lower() in key for word in model_name.lower().split()):
                 matched_candidate = candidate
                 break
 
-        unit_cost = float(matched_candidate.get("cost", matched_candidate.get("unit_cost", 999.0)))
-        suggested_quantity = max(10, math.ceil(item["predicted_demand"] - item["current_stock"]) + 5)
+        unit_cost = float(
+            matched_candidate.get("cost", matched_candidate.get("unit_cost", 999.0))
+        )
+        suggested_quantity = max(
+            10, math.ceil(item["predicted_demand"] - item["current_stock"]) + 5
+        )
         total_cost = round(unit_cost * suggested_quantity, 2)
 
         po_number = str(idx).zfill(3)
@@ -86,7 +94,7 @@ def generate_draft_po(inventory_status: list[dict], candidate_df: pd.DataFrame) 
 
         po = {
             "po_id": po_id,
-            "model": model,
+            "model": model_name,
             "suggested_quantity": suggested_quantity,
             "unit_cost": unit_cost,
             "total_cost": total_cost,
@@ -96,7 +104,7 @@ def generate_draft_po(inventory_status: list[dict], candidate_df: pd.DataFrame) 
             "ai_justification": None,
         }
 
-        po["ai_justification"] = _ai_justification(client, po)
+        po["ai_justification"] = _ai_justification(gemini, po)
         draft_pos.append(po)
 
     return draft_pos
