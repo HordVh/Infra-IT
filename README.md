@@ -19,7 +19,7 @@ An AI-powered IT procurement and inventory management prototype built with **Nex
 
 - **Python 3.10+** — [Download here](https://www.python.org/downloads/)
 - **Node.js 18+** — [Download here](https://nodejs.org/)
-- **An Anthropic API key** — [Get one here](https://console.anthropic.com/)
+- **A Gemini API key** — [Get one here](https://aistudio.google.com/)
 
 ---
 
