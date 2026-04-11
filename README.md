@@ -125,4 +125,4 @@ The app will be available at http://localhost:3000
 
 - **In-memory state**: Uploaded DataFrames are stored in memory and reset on server restart
 - **No authentication**: This is a prototype — no auth is implemented
-- **AI graceful degradation**: If `ANTHROPIC_API_KEY` is not set, AI endpoints return a placeholder message instead of failing
+- **AI graceful degradation**: If `GEMINI_API_KEY` is not set, AI endpoints return a placeholder message instead of failing
