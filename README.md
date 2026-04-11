@@ -10,7 +10,7 @@ An AI-powered IT procurement and inventory management prototype built with **Nex
 |---|---|
 | Frontend | Next.js 15 (App Router), Tailwind CSS, Recharts |
 | Backend | Python FastAPI, pandas, openpyxl |
-| AI | Anthropic Claude (`claude-sonnet-4-20250514`) |
+| AI | Gemini |
 | Fonts | DM Sans, DM Mono (Google Fonts) |
 
 ---
@@ -72,9 +72,9 @@ venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Configure Anthropic API key
+# Configure Gemini API key
 copy .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
+# Edit .env and add your GEMINI_API_KEY
 
 # Generate sample Excel file
 python create_sample_data.py
