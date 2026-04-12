@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from data_store import load_saved_data
 from routers import upload, inventory, forecast, purchase_orders, hardware_eval
 
 app = FastAPI(
@@ -20,6 +21,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+def startup_event():
+    loaded = load_saved_data()
+    if loaded:
+        print("Loaded saved upload from disk.")
 
 app.include_router(upload.router, tags=["Upload"])
 app.include_router(inventory.router, tags=["Inventory"])

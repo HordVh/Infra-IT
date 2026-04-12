@@ -127,8 +127,11 @@ export default function HardwareEvalPage() {
         {/* Results */}
         {results.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-            {results.map((r) => (
-              <HardwareEvalCard key={r.candidate_model} result={r} />
+            {results.map((r, index) => (
+              <HardwareEvalCard
+                key={`${r.candidate_model ?? "unknown"}-${index}`}
+                result={r}
+              />
             ))}
           </div>
         )}

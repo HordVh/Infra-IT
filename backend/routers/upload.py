@@ -2,7 +2,7 @@ import io
 import pandas as pd
 from fastapi import APIRouter, UploadFile, File, HTTPException
 
-from data_store import data_store
+from data_store import data_store, save_uploaded_file
 
 router = APIRouter()
 
@@ -33,12 +33,15 @@ async def upload_excel(file: UploadFile = File(...)):
                 detail=f"Missing sheet: {sheet_name}",
             )
 
-    # Parse and cache
+    # Parse, normalize, and cache
     previews = {}
     for sheet_name in REQUIRED_SHEETS:
         df = pd.read_excel(xls, sheet_name=sheet_name)
+        df = df.copy()
+        df.columns = [str(col).strip().lower().replace(" ", "_") for col in df.columns]
         data_store[sheet_name] = df
-        # Replace NaN with None for JSON serialisation
+        # Replace NaN with None for JSON serialization
         previews[sheet_name] = df.head(5).where(pd.notnull(df.head(5)), None).to_dict(orient="records")
 
+    save_uploaded_file(contents)
     return previews

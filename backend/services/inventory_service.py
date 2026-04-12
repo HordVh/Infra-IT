@@ -11,10 +11,25 @@ def calculate_inventory_status(
       predicted_demand >= current_stock * 0.6  → LOW
       else                                      → OK
     """
-    forecast_df = pd.DataFrame(forecast_results)
+    if "quantity" in inventory_df.columns:
+        inventory_summary = (
+            inventory_df.groupby("model", as_index=False)["quantity"].sum()
+        )
+    else:
+        inventory_summary = (
+            inventory_df.groupby("model", as_index=False)
+            .size()
+            .reset_index()
+            .rename(columns={"size": "quantity"})
+            .drop(columns=["index"])
+        )
 
-    # Merge on model
-    merged = inventory_df.merge(forecast_df[["model", "predicted_demand"]], on="model", how="left")
+    forecast_df = pd.DataFrame(forecast_results)
+    merged = forecast_df.merge(
+        inventory_summary,
+        on="model",
+        how="left",
+    )
 
     status_list = []
     for _, row in merged.iterrows():
