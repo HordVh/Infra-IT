@@ -1,35 +1,22 @@
-import os
+import logging
 import math
 import pandas as pd
 from datetime import datetime, timezone
+from services.ai_client import generate_response
+
+logger = logging.getLogger(__name__)
+
+_UNAVAILABLE_MSG = (
+    "AI justification unavailable — Llama API could not be reached. "
+    "Ensure ollamafreeapi is installed and the service is running."
+)
 
 
-def _get_gemini_model():
-    """Initialise and return a Gemini GenerativeModel, or None if unconfigured."""
-    try:
-        import google.generativeai as genai
-
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            return None
-
-        genai.configure(api_key=api_key)
-        return genai.GenerativeModel("gemini-2.0-flash")
-    except ImportError:
-        return None
-
-
-def _ai_justification(model, po: dict) -> str:
+def _ai_justification(po: dict) -> str:
     """
-    Call Gemini to generate a one-paragraph PO justification narrative
+    Call Llama 3 to generate a one-paragraph PO justification narrative
     suitable for a finance committee.
     """
-    if model is None:
-        return (
-            "AI justification unavailable — GEMINI_API_KEY not configured. "
-            "Please set the environment variable and restart the server."
-        )
-
     prompt = f"""You are an IT procurement manager writing internal purchase order documentation.
 
 Draft a one-paragraph justification for the following purchase order:
@@ -44,9 +31,12 @@ Write in a professional, concise tone suitable for approval by a finance committ
 Include the business impact of not procuring, cost justification, and urgency."""
 
     try:
-        response = model.generate_content(prompt)
-        return response.text.strip()
+        result = generate_response(prompt)
+        if result is None:
+            return _UNAVAILABLE_MSG
+        return str(result).strip()
     except Exception as e:
+        logger.error("PO justification AI call failed: %s", e)
         return f"AI justification error: {str(e)}"
 
 
@@ -54,13 +44,10 @@ def generate_draft_po(inventory_status: list[dict], candidate_df: pd.DataFrame) 
     """
     Generates draft purchase orders for CRITICAL and LOW inventory items.
     Matches each flagged model to a candidate product; falls back to the first candidate.
-    Calls Gemini for a justification narrative per PO.
+    Calls Llama 3 for a justification narrative per PO.
     """
-    gemini = _get_gemini_model()
-
     flagged = [item for item in inventory_status if item["status"] in ("CRITICAL", "LOW")]
 
-    # Build candidate lookup keyed by lower-case model name
     candidate_lookup: dict[str, dict] = {}
     if not candidate_df.empty:
         for _, row in candidate_df.iterrows():
@@ -73,7 +60,6 @@ def generate_draft_po(inventory_status: list[dict], candidate_df: pd.DataFrame) 
     for idx, item in enumerate(flagged, start=1):
         model_name = item["model"]
 
-        # Fuzzy-match candidate by model name word fragments
         matched_candidate = first_candidate
         for key, candidate in candidate_lookup.items():
             if any(word.lower() in key for word in model_name.lower().split()):
@@ -104,7 +90,7 @@ def generate_draft_po(inventory_status: list[dict], candidate_df: pd.DataFrame) 
             "ai_justification": None,
         }
 
-        po["ai_justification"] = _ai_justification(gemini, po)
+        po["ai_justification"] = _ai_justification(po)
         draft_pos.append(po)
 
     return draft_pos

@@ -2,7 +2,7 @@ fastapi
 uvicorn[standard]
 pandas
 openpyxl
-google-generativeai
+ollama
 python-multipart
 pydantic
 python-dotenv
