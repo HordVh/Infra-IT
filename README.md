@@ -10,7 +10,7 @@ An AI-powered IT procurement and inventory management prototype built with **Nex
 |---|---|
 | Frontend | Next.js 15 (App Router), Tailwind CSS, Recharts |
 | Backend | Python FastAPI, pandas, openpyxl |
-| AI | Gemini |
+| AI | Llama 3 (via OllamaFreeAPI) |
 | Fonts | DM Sans, DM Mono (Google Fonts) |
 
 ---
@@ -19,7 +19,14 @@ An AI-powered IT procurement and inventory management prototype built with **Nex
 
 - **Python 3.10+** — [Download here](https://www.python.org/downloads/)
 - **Node.js 18+** — [Download here](https://nodejs.org/)
-- **A Gemini API key** — [Get one here](https://aistudio.google.com/)
+- **Ollama running locally** — [Download here](https://ollama.com/)
+
+After installing Ollama, pull the required models:
+
+```bash
+ollama pull llama3.2:3b
+ollama pull llama3:latest
+```
 
 ---
 
@@ -37,6 +44,7 @@ An AI-powered IT procurement and inventory management prototype built with **Nex
 │   │   ├── hardware_eval.py     # POST /hardware-eval
 │   │   └── purchase_orders.py   # POST /purchase-orders/generate
 │   ├── services/                # Business logic
+│   │   ├── ai_client.py         # Shared Llama 3 client (OllamaFreeAPI)
 │   │   ├── forecast_service.py
 │   │   ├── inventory_service.py
 │   │   ├── hardware_eval_service.py
@@ -60,7 +68,15 @@ Download and install Python 3.10+ from https://www.python.org/downloads/
 
 Make sure to check **"Add python.exe to PATH"** during installation.
 
-### 2. Backend Setup
+### 2. Start Ollama
+
+Ensure the Ollama service is running before starting the backend:
+
+```bash
+ollama serve
+```
+
+### 3. Backend Setup
 
 ```powershell
 cd backend
@@ -72,10 +88,6 @@ venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Configure Gemini API key
-copy .env.example .env
-# Edit .env and add your GEMINI_API_KEY
-
 # Generate sample Excel file
 python create_sample_data.py
 
@@ -86,7 +98,7 @@ uvicorn main:app --reload --port 8000
 The API will be available at http://localhost:8000  
 Interactive docs: http://localhost:8000/docs
 
-### 3. Frontend Setup
+### 4. Frontend Setup
 
 ```powershell
 cd frontend
@@ -121,8 +133,20 @@ The app will be available at http://localhost:3000
 
 ---
 
+## AI Models
+
+| Use case | Model | Notes |
+|---|---|---|
+| Hardware evaluation | `llama3.2:3b` | Batch assessment of all candidates in one call |
+| PO justification | `llama3.2:3b` | One call per purchase order |
+| Streaming (optional) | `llama3:latest` | Used via `generate_response(stream=True)` |
+
+Both models are pulled from your local Ollama instance — no API key or internet connection required at runtime.
+
+---
+
 ## Notes
 
 - **In-memory state**: Uploaded DataFrames are stored in memory and reset on server restart
 - **No authentication**: This is a prototype — no auth is implemented
-- **AI graceful degradation**: If `GEMINI_API_KEY` is not set, AI endpoints return a placeholder message instead of failing
+- **AI graceful degradation**: If the Ollama service is unreachable, AI endpoints return a placeholder message instead of failing
